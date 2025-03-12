@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
-import prismaClient from "../db/index.ts";
-import { Quantity } from "@prisma/client";
+import prismaClient from "../db/index.js";
+import {Quantity} from '@prisma/client'
 import {
   perfumeData,
   perfumeGetData,
   perfumeUpdateData,
   perfumeDeleteData,
-} from "../parsers/Parsers.ts";
+} from "../parsers/Parsers.js";
 // @desc    Register new user
 // @route   POST /api/users
 // @access  Public

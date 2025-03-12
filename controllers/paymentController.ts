@@ -1,7 +1,6 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
-import prismaClient from "../db/index.ts";
-import { paymentData, verifyPaymentData } from "../parsers/Parsers.ts";
+import { paymentData, verifyPaymentData } from "../parsers/Parsers.js";
 export const initiatePayment = async (req: any, res: any) => {
   if (req.method !== "POST") return res.status(405).end();
 

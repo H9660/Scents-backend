@@ -1,18 +1,16 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "node16",
-    "moduleResolution": "node16",
-    "allowImportingTsExtensions": true,
+    "module": "NodeNext",               // ESM-compatible modules
+    "moduleResolution": "NodeNext",     // Resolves ESM paths correctly
     "rootDir": "./",
     "outDir": "./dist",
-    "esModuleInterop": true,
+    "allowImportingTsExtensions": false,
+    "esModuleInterop": true,            // Ensures compatibility with CommonJS modules
     "strict": true,
-    "noEmit": true,  // Ensures no JS files are generated
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "target": "ES2020"                  // Modern syntax support
   },
-  "include": ["**/*.ts"],
+  "include": ["./**/*.ts"],
   "exclude": ["node_modules", "dist"]
-  
 }
