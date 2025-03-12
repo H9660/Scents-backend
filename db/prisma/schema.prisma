@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model OTP{
+  otp    String
+  phone  String  @id 
+  tries  Int @default(5)
+}
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String   @unique
+  address   String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  totalCartprice  Int    @default(0)
+  transactions Transactions[]
+  cart      Cart?    
+  @@index([phone])
+}
+
+model Cart {
+  id String @id @default(uuid())
+  userId String @unique
+  cartData Json
+  cartPrice Int @default(0)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+
+model Transactions {
+  transactions_id  String @id @default(uuid())
+  status  Status
+  userId  String
+  razorpay_payment_id String 
+  razorpay_order_id String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User    @relation(fields: [userId], references: [id])
+}
+
+model Perfume{
+  id             String           @id @default(uuid())
+  quantity       Quantity         @default(SMALL)
+  name           String           
+  price          Int        
+  imageUrl       String           @default("")
+  available      Available        @default(Yes)
+  @@index([name])
+}
+
+enum Available {
+  Yes
+  No
+}
+
+enum Quantity{
+ SMALL
+ MEDIUM
+ LARGE
+}
+
+enum Status{
+  Pending
+  Completed
+  Failed
+}
+
