@@ -4,11 +4,11 @@ import {
   otpData,
   cartData,
   getCartData,
-} from "../parsers/Parsers.ts";
-import prismaClient from "../db/index.ts";
+} from "../parsers/Parsers.js";
+import prismaClient from "../db/index.js";
+import twilio from "twilio";
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const token = process.env.TWILIO_ACCOUNT_TOKEN;
-import twilio from "twilio";
 const client = twilio(accountSid, token);
 
 const generateOTP = () => {
@@ -208,7 +208,7 @@ export const updateCart = async (req: any, res: any) => {
           usercartMap.set(product, { quantity: 0, price: 0 });
         }
 
-        usercartMap.set(product, {
+        usercartMap.set(product as string, {
           quantity: (usercartMap.get(product).quantity || 0) + count,
           price:
             (usercartMap.get(product).price || 0) +

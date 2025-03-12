@@ -6,7 +6,7 @@ import  { createPerfume,
     deletePerfume,
     updatePerfume,
     // calcBatchPrice
-} from "../controllers/perfumeController.ts";
+} from "../controllers/perfumeController.js";
 // we need to protect the middle ware thats why we are adding the middel ware here
 
 router.get("/", getPerfume)

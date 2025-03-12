@@ -1,6 +1,6 @@
 import express from "express";
 const router = express.Router();
-import { registerUser, loginUser, verifyOTP, updateCart, getCart} from "../controllers/userController.ts";
+import { registerUser, loginUser, verifyOTP, updateCart, getCart} from "../controllers/userController.js";
 // we need to protect the middle ware thats why we are adding the middel ware here
 
 router.get("/getCart", getCart);

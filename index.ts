@@ -1,9 +1,11 @@
 import express from "express"
-import userRoutes from "./routes/userRoutes.ts";
-import perfumeRoutes from "./routes/perfumeRoutes.ts";
-import paymentRoutes from "./routes/paymentRoutes.ts";
+import dotenv from 'dotenv'
+import userRoutes from "./routes/userRoutes.js";
+import perfumeRoutes from "./routes/perfumeRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 import cors from "cors";
 const app = express();
+dotenv.config()
 app.use(express.json());
 app.use(
   cors({
@@ -22,3 +24,5 @@ process.on("uncaughtException", (error) => {
   console.error("Uncaught Exception:", error);
   process.exit(1);
 });
+
+export default app

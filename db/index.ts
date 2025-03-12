@@ -1,11 +1,10 @@
-import { config } from "dotenv";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
-import {PrismaClient} from "@prisma/client"
-
-// Load env file from the db package directory
+import {config} from 'dotenv';
+import path, {join} from 'path';
+import { PrismaClient } from '@prisma/client';
+import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = path.dirname(__filename);
+
 
 // Load .env file
 config({ path: join(__dirname, ".env") });

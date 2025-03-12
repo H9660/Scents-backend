@@ -4,10 +4,12 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "server": "tsc && nodemon dist/index.js",
-    "start": "tsc && node dist/index.js",
-    "dev": "concurrently \"npm run server\" \"npm run client\""
+    "build": "tsc --project tsconfig.json",
+    "server": "tsc &&  nodemon -r dist/index.js",
+    "start": "tsc && nodemon -r dist/index.js",
+    "dev": "npm run server",
+    "vercel-build": "npm run build",
+    "postinstall": "prisma generate --schema=./db/prisma/schema.prisma"
   },
   "keywords": [],
   "author": "",
@@ -28,10 +30,12 @@
     "@prisma/client": "^6.4.1",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "graphql": "^16.10.0",
     "prisma": "^6.4.1",
     "razorpay": "^2.9.6",
+    "twilio": "^5.5.0",
     "zod": "^3.24.2"
   }
 }
