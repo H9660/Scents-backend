@@ -52,7 +52,6 @@ export const loginUser = async (req: any, res: any) => {
   console.log(OTP);
   const parsedPhoneno = "+91" + parsedBody.data.phone;
   sendOTP(parsedPhoneno, OTP);
-  // cache this otp here so that it doesnt generate again and again.
   try {
     await prismaClient.oTP.update({
       where: {
@@ -70,7 +69,6 @@ export const loginUser = async (req: any, res: any) => {
     console.error("Error creating OTP:", otpError);
     return res.status(500).json({ error: otpError });
   }
-  // send OTP to the user
 };
 
 export const verifyOTP = async (req: any, res: any) => {
@@ -82,8 +80,6 @@ export const verifyOTP = async (req: any, res: any) => {
     return;
   }
 
-  // cache this otp for retries
-  // user redis here
   const savedOTP = await prismaClient.oTP.findFirst({
     where: { phone: parsedBody.data.phone },
   });
@@ -156,7 +152,8 @@ export const registerUser = async (req: any, res: any) => {
   }
 
   const OTP = generateOTP();
-  sendOTP(parsedBody.data.phone, OTP);
+  const parsedPhoneno = "+91" + parsedBody.data.phone;
+  sendOTP(parsedPhoneno, OTP);
   console.log(OTP);
   // cache this otp here so that it doesnt generate again and again
   try {

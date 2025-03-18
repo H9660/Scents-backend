@@ -24,6 +24,7 @@ export const perfumeUpdateData = z.object({
   newName: z.string().optional(),
   price: z.number().optional(),
   imageUrl: z.string().optional(),
+  discription: z.string().optional()
 });
 
 export const perfumeDeleteData = z.object({
