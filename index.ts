@@ -7,11 +7,20 @@ import cors from "cors";
 const app = express();
 dotenv.config()
 app.use(express.json());
-app.use(
-  cors({
-    origin: [process.env.FRONTEND_URL as string, "http://localhost:3000"]
-  })
-);
+const allowedOrigins = process.env.NODE_ENV === 'PROD' 
+    ? ['https://frontend-chi-seven-83.vercel.app/home']  // Only production frontend allowed
+    : ['http://localhost:3000'];          // Allow localhost in dev only
+
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin as string)) {
+            callback(null, true);  // Allow the request
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+}));
+
 app.use("/api/users", userRoutes);
 app.use("/api/perfume", perfumeRoutes);
 app.use("/api/payment", paymentRoutes);
@@ -26,3 +35,5 @@ process.on("uncaughtException", (error) => {
 });
 
 export default app
+
+
