@@ -238,6 +238,7 @@ export const updateCart = async (req: any, res: any) => {
 
     return res.status(200).json({
       price: totalPrice,
+      cartid: userCart?.id
     });
   } catch (otpError) {
     console.error("Error updating cart:", otpError);
