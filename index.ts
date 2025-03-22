@@ -8,7 +8,7 @@ const app = express();
 dotenv.config()
 app.use(express.json());
 const allowedOrigins = process.env.NODE_ENV === 'PROD' 
-    ? ['https://frontend-chi-seven-83.vercel.app/home']  // Only production frontend allowed
+    ? ['https://frontend-chi-seven-83.vercel.app/']  // Only production frontend allowed
     : ['http://localhost:3000'];          // Allow localhost in dev only
 
 app.use(cors({
