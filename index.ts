@@ -7,19 +7,12 @@ import cors from "cors";
 const app = express();
 dotenv.config()
 app.use(express.json());
-const allowedOrigins = process.env.NODE_ENV === 'PROD' 
-    ? ['https://frontend-chi-seven-83.vercel.app/']  // Only production frontend allowed
-    : ['http://localhost:3000'];          // Allow localhost in dev only
-
-app.use(cors({
-    origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin as string)) {
-            callback(null, true);  // Allow the request
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-}));
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL);
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    next();
+  });
+  
 
 app.use("/api/users", userRoutes);
 app.use("/api/perfume", perfumeRoutes);
