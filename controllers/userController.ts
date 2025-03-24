@@ -11,8 +11,8 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const token = process.env.TWILIO_ACCOUNT_TOKEN;
 const client = twilio(accountSid, token);
 
-const generateOTP = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+const generateOTP = (len: number) => {
+  return Math.floor(Math.pow(10, len - 1) + Math.random() * Math.pow(10, len - 1) * 9).toString();
 };
 
 const sendOTP = async (phoneNumber: string, otp: string) => {
@@ -48,10 +48,10 @@ export const loginUser = async (req: any, res: any) => {
     return;
   }
 
-  const OTP = generateOTP();
+  const OTP = generateOTP(6);
   console.log(OTP);
   const parsedPhoneno = "+91" + parsedBody.data.phone;
-  sendOTP(parsedPhoneno, OTP);
+  // sendOTP(parsedPhoneno, OTP);
   try {
     await prismaClient.oTP.update({
       where: {
@@ -151,7 +151,7 @@ export const registerUser = async (req: any, res: any) => {
     return;
   }
 
-  const OTP = generateOTP();
+  const OTP = generateOTP(6);
   const parsedPhoneno = "+91" + parsedBody.data.phone;
   sendOTP(parsedPhoneno, OTP);
   console.log(OTP);

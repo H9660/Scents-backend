@@ -7,12 +7,10 @@ import cors from "cors";
 const app = express();
 dotenv.config()
 app.use(express.json());
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL);
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-    next();
-  });
-  
+
+app.use(cors({
+    origin: [process.env.FRONTEND_URL || "", 'http://localhost:3000']
+}));
 
 app.use("/api/users", userRoutes);
 app.use("/api/perfume", perfumeRoutes);
