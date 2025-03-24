@@ -6,20 +6,29 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import cors from "cors";
 const app = express();
 dotenv.config()
-
 const allowedOrigins = [
-  process.env.FRONTEND_URL, // For stable frontend URL
-  /^https:\/\/your-frontend-domain.*\.vercel\.app$/ // For dynamic preview URLs
+  process.env.FRONTEND_URL,  // Stable frontend URL
+  /^https:\/\/your-frontend-domain.*\.vercel\.app$/ // Dynamic preview URLs
 ];
 
-app.use((req, res, next) => {
-  const origin = req.get('origin');
-  if (allowedOrigins.some((o) => typeof o === 'string' ? o === origin : o.test(origin))) {
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.get('origin')??";
+
+  if (origin && allowedOrigins.some((o) => 
+    typeof o === 'string' ? o === origin : o.test(origin)
+  )) {
     res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   }
+
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+    return;
+  }
+
   next();
 });
-
 app.use(express.json());
 app.use("/api/users", userRoutes);
 app.use("/api/perfume", perfumeRoutes);
