@@ -6,21 +6,21 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import cors from "cors";
 const app = express();
 dotenv.config()
+
+const allowedOrigins = [
+  process.env.FRONTEND_URL, // For stable frontend URL
+  /^https:\/\/your-frontend-domain.*\.vercel\.app$/ // For dynamic preview URLs
+];
+
+app.use((req, res, next) => {
+  const origin = req.get('origin');
+  if (allowedOrigins.some((o) => typeof o === 'string' ? o === origin : o.test(origin))) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  next();
+});
+
 app.use(express.json());
-const allowedOrigins = process.env.NODE_ENV === 'PROD' 
-    ? ['https://frontend-chi-seven-83.vercel.app/home']  // Only production frontend allowed
-    : ['http://localhost:3000'];          // Allow localhost in dev only
-
-app.use(cors({
-    origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin as string)) {
-            callback(null, true);  // Allow the request
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-}));
-
 app.use("/api/users", userRoutes);
 app.use("/api/perfume", perfumeRoutes);
 app.use("/api/payment", paymentRoutes);
