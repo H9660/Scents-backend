@@ -6,12 +6,11 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import cors from "cors";
 const app = express();
 dotenv.config()
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  next();
+});
 app.use(express.json());
-
-app.use(cors({
-    origin: [process.env.FRONTEND_URL || "", 'http://localhost:3000']
-}));
-
 app.use("/api/users", userRoutes);
 app.use("/api/perfume", perfumeRoutes);
 app.use("/api/payment", paymentRoutes);
