@@ -17,7 +17,7 @@ const allowedOrigins = [
 ];
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-  const origin = req.get('origin')??";
+  const origin = req.get('origin') ?? '';
 
   if (origin && allowedOrigins.some((o) => 
     typeof o === 'string' ? o === origin : o.test(origin)
