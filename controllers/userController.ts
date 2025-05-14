@@ -177,6 +177,12 @@ export const updateCart = async (req: any, res: any) => {
     },
   });
 
+  if (!userCart) {
+    res.status(404).json({
+      message: "Cannot add item. Please log in.",
+    });
+    return;
+  }
   try {
     const usercartMap = new Map(Object.entries(userCart?.cartData || {}));
     const gotCartMap = new Map(Object.entries(parsedBody.data.cart || {}));
