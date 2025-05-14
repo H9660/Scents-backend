@@ -12,8 +12,8 @@ app.use((req, res, next) => {
 });
 
 const allowedOrigins = [
-  process.env.FRONTEND_URL,  // Stable frontend URL
-  https://frontend-chi-seven-83.vercel.app
+  process.env.FRONTEND_URL,
+  'https://frontend-chi-seven-83.vercel.app'
 ];
 
 app.use((req: Request, res: Response, next: NextFunction) => {
