@@ -30,7 +30,6 @@ const sendOTP = async (phoneNumber: string, otp: string) => {
   }
 };
 export const loginUser = async (req: any, res: any) => {
-  console.log(req.body);
   const parsedBody = loginData.safeParse(req.body);
   if (!parsedBody.success) {
     res.status(411).json({
@@ -53,7 +52,7 @@ export const loginUser = async (req: any, res: any) => {
   const OTP = generateOTP(6);
   console.log(OTP);
   const parsedPhoneno = "+91" + parsedBody.data.phone;
-  // sendOTP(parsedPhoneno, OTP);
+  sendOTP(parsedPhoneno, OTP);
   try {
     await prismaClient.oTP.update({
       where: {
@@ -61,7 +60,6 @@ export const loginUser = async (req: any, res: any) => {
       },
       data: {
         otp: OTP,
-        tries: 5,
       },
     });
     res.status(200).send({
@@ -109,24 +107,6 @@ export const verifyOTP = async (req: any, res: any) => {
     return;
   }
 
-  if (savedOTP?.tries == 0) {
-    res.status(400).json({
-      message:
-        "You have entered wrong otp multiple times. Wait for 5 mins and then try again.",
-    });
-    return;
-  } else {
-    await prismaClient.oTP.update({
-      where: {
-        phone: parsedBody.data.phone,
-      },
-
-      data: {
-        tries: savedOTP?.tries! - 1,
-      },
-    });
-  }
-
   res.status(400).json({
     message: "OTP is invalid",
   });
@@ -165,12 +145,10 @@ export const registerUser = async (req: any, res: any) => {
       },
       update: {
         otp: OTP,
-        tries: 5,
       },
       create: {
         phone: parsedBody.data.phone,
         otp: OTP,
-        tries: 5,
       },
     });
 
@@ -262,42 +240,42 @@ export const updateCart = async (req: any, res: any) => {
 };
 
 export const getCart = async (req: any, res: any) => {
-  try{const parsedBody = getCartData.safeParse({ userId: req.query.userId });
-  if (!parsedBody.success) {
-    res.status(411).json({
-      message: "Please check the input data.",
+  try {
+    const parsedBody = getCartData.safeParse({ userId: req.query.userId });
+    if (!parsedBody.success) {
+      res.status(411).json({
+        message: "Please check the input data.",
+      });
+      return;
+    }
+
+    const userCart = await prismaClient.cart.findFirst({
+      where: {
+        userId: parsedBody.data.userId,
+      },
     });
-    return;
+
+    let cart = {};
+    let price = 0;
+
+    if (userCart && userCart.cartData) {
+      cart = userCart.cartData;
+      price = userCart.cartPrice;
+    }
+    return res.status(200).json({
+      cart: cart,
+      price: price,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error,
+    });
   }
-
-  const userCart = await prismaClient.cart.findFirst({
-    where: {
-      userId: parsedBody.data.userId,
-    },
-  });
-
-  let cart = {};
-  let price = 0;
-
-  if (userCart && userCart.cartData) {
-    cart = userCart.cartData;
-    price = userCart.cartPrice;
-  }
-  return res.status(200).json({
-    cart: cart,
-    price: price,
-  });
-}catch(error){
-  res.status(500).json({
-    error: error,
-  });
-}
 };
 
 export const getOrders = async (req: any, res: any) => {
   try {
-
-    console.log("tests")
+    console.log("tests");
     const userId = req.body.userId;
     const User = await prismaClient.user.findFirst({
       where: {
@@ -323,26 +301,25 @@ export const getOrders = async (req: any, res: any) => {
   }
 };
 
-export const deletecart = async (req: any, res: any)=>{
+export const deletecart = async (req: any, res: any) => {
   try {
-
     const userId = req.body.userId;
     await prismaClient.cart.deleteMany({
-      where:{
-        userId: userId
-      }
-    })
+      where: {
+        userId: userId,
+      },
+    });
     const User = await prismaClient.user.update({
       where: {
         id: userId as string,
       },
 
-      data:{
-        cart: {}
+      data: {
+        cart: {},
       },
-      include:{
-        transactions: true
-      }
+      include: {
+        transactions: true,
+      },
     });
 
     if (!User) {
@@ -350,7 +327,7 @@ export const deletecart = async (req: any, res: any)=>{
         error: "User not found!",
       });
     }
-    
+
     return res.status(200).json({
       error: "",
       orders: User?.transactions,
@@ -359,5 +336,5 @@ export const deletecart = async (req: any, res: any)=>{
     res.status(500).json({
       error: error,
     });
-  } 
-}
+  }
+};
