@@ -7,7 +7,6 @@
     "build": "tsc --project tsconfig.json",
     "server": "tsc &&  nodemon -r dist/index.js",
     "start": "tsc && nodemon -r dist/index.js",
-    "dev": "npm run server",
     "vercel-build": "npm run build",
     "postinstall": "prisma generate --schema=./db/prisma/schema.prisma"
   },
@@ -35,6 +34,7 @@
     "graphql": "^16.10.0",
     "prisma": "^6.4.1",
     "razorpay": "^2.9.6",
+    "resend": "^4.2.0",
     "twilio": "^5.5.0",
     "zod": "^3.24.2"
   }

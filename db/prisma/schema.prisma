@@ -45,6 +45,7 @@ model Transactions {
   razorpay_order_id   String
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+  subtotal            Int      @default(0)
   user                User     @relation(fields: [userId], references: [id])
 }
 

@@ -11,8 +11,10 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const token = process.env.TWILIO_ACCOUNT_TOKEN;
 const client = twilio(accountSid, token);
 
-const generateOTP = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+const generateOTP = (len: number) => {
+  return Math.floor(
+    Math.pow(10, len - 1) + Math.random() * Math.pow(10, len - 1) * 9
+  ).toString();
 };
 
 const sendOTP = async (phoneNumber: string, otp: string) => {
@@ -48,10 +50,10 @@ export const loginUser = async (req: any, res: any) => {
     return;
   }
 
-  const OTP = generateOTP();
+  const OTP = generateOTP(6);
   console.log(OTP);
   const parsedPhoneno = "+91" + parsedBody.data.phone;
-  sendOTP(parsedPhoneno, OTP);
+  // sendOTP(parsedPhoneno, OTP);
   try {
     await prismaClient.oTP.update({
       where: {
@@ -135,7 +137,7 @@ export const registerUser = async (req: any, res: any) => {
 
   if (!parsedBody.success) {
     res.status(411).json({
-      message: "Plaese check the input data.",
+      message: "Please check the input data.",
     });
     return;
   }
@@ -151,14 +153,21 @@ export const registerUser = async (req: any, res: any) => {
     return;
   }
 
-  const OTP = generateOTP();
+  const OTP = generateOTP(6);
   const parsedPhoneno = "+91" + parsedBody.data.phone;
   sendOTP(parsedPhoneno, OTP);
   console.log(OTP);
   // cache this otp here so that it doesnt generate again and again
   try {
-    await prismaClient.oTP.create({
-      data: {
+    await prismaClient.oTP.upsert({
+      where: {
+        phone: parsedBody.data.phone, // Condition to find an existing record
+      },
+      update: {
+        otp: OTP,
+        tries: 5,
+      },
+      create: {
         phone: parsedBody.data.phone,
         otp: OTP,
         tries: 5,
@@ -180,7 +189,7 @@ export const updateCart = async (req: any, res: any) => {
   if (!parsedBody.success) {
     res.status(411).json({
       message: "Please check the input data.",
-    }); 
+    });
     return;
   }
 
@@ -202,10 +211,15 @@ export const updateCart = async (req: any, res: any) => {
 
       if (Perfume) {
         if (!usercartMap.has(product)) {
-          usercartMap.set(product, { quantity: 0, price: 0 });
+          usercartMap.set(product, {
+            imageUrl: Perfume.imageUrl,
+            quantity: 0,
+            price: 0,
+          });
         }
 
         usercartMap.set(product as string, {
+          imageUrl: Perfume.imageUrl,
           quantity: (usercartMap.get(product).quantity || 0) + count,
           price:
             (usercartMap.get(product).price || 0) +
@@ -227,8 +241,9 @@ export const updateCart = async (req: any, res: any) => {
         },
       });
     } catch (error) {
+      console.log("enter");
       await prismaClient.cart.create({
-        data: { 
+        data: {
           userId: parsedBody.data.userId,
           cartData: Object.fromEntries(usercartMap),
           cartPrice: totalPrice,
@@ -238,6 +253,7 @@ export const updateCart = async (req: any, res: any) => {
 
     return res.status(200).json({
       price: totalPrice,
+      cartid: userCart?.id,
     });
   } catch (otpError) {
     console.error("Error updating cart:", otpError);
@@ -246,7 +262,7 @@ export const updateCart = async (req: any, res: any) => {
 };
 
 export const getCart = async (req: any, res: any) => {
-  const parsedBody = getCartData.safeParse({ userId: req.query.userId });
+  try{const parsedBody = getCartData.safeParse({ userId: req.query.userId });
   if (!parsedBody.success) {
     res.status(411).json({
       message: "Please check the input data.",
@@ -271,4 +287,77 @@ export const getCart = async (req: any, res: any) => {
     cart: cart,
     price: price,
   });
+}catch(error){
+  res.status(500).json({
+    error: error,
+  });
+}
 };
+
+export const getOrders = async (req: any, res: any) => {
+  try {
+
+    console.log("tests")
+    const userId = req.body.userId;
+    const User = await prismaClient.user.findFirst({
+      where: {
+        id: userId as string,
+      },
+      include: { transactions: true },
+    });
+
+    if (!User) {
+      res.status(404).json({
+        error: "User not found!",
+      });
+    }
+
+    return res.status(200).json({
+      error: "",
+      orders: User?.transactions,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error,
+    });
+  }
+};
+
+export const deletecart = async (req: any, res: any)=>{
+  try {
+
+    const userId = req.body.userId;
+    await prismaClient.cart.deleteMany({
+      where:{
+        userId: userId
+      }
+    })
+    const User = await prismaClient.user.update({
+      where: {
+        id: userId as string,
+      },
+
+      data:{
+        cart: {}
+      },
+      include:{
+        transactions: true
+      }
+    });
+
+    if (!User) {
+      res.status(404).json({
+        error: "User not found!",
+      });
+    }
+    
+    return res.status(200).json({
+      error: "",
+      orders: User?.transactions,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error,
+    });
+  } 
+}

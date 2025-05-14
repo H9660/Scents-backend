@@ -1,4 +1,4 @@
-import { string, z } from "zod";
+import { z } from "zod";
 export const loginData = z.object({
   phone: z.string(),
 });
@@ -24,7 +24,7 @@ export const perfumeUpdateData = z.object({
   newName: z.string().optional(),
   price: z.number().optional(),
   imageUrl: z.string().optional(),
-  discription: z.string().optional()
+  discription: z.string().optional(),
 });
 
 export const perfumeDeleteData = z.object({
@@ -43,16 +43,24 @@ export const cartData = z.object({
 });
 
 export const getCartData = z.object({
-  userId: z.string()
-})
+  userId: z.string(),
+});
 
 export const paymentData = z.object({
   amount: z.number(),
-  userId: z.string()
-})
+  userId: z.string(),
+});
 
 export const verifyPaymentData = z.object({
   razorpay_payment_id: z.string(),
   razorpay_order_id: z.string(),
-  razorpay_signature: z.string()
-})
+  razorpay_signature: z.string(),
+});
+
+export const transactionData = z.object({
+  razorpay_payment_id: z.string(),
+  razorpay_order_id: z.string(),
+  userId: z.string(),
+  subtotal: z.number(),
+  status: z.enum(["Pending", "Completed", "Failed"]),
+});
