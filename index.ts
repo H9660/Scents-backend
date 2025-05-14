@@ -8,7 +8,7 @@ const app = express();
 dotenv.config()
 app.use(
   cors({
-    origin: ["https://frontend-chi-seven-83.vercel.app", process.env.FRONTEND_URL],
+    origin: ["https://frontend-chi-seven-83.vercel.app", process.env.FRONTEND_URL || ""]
   })
 );
 app.use(express.json());
