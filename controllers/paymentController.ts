@@ -6,7 +6,13 @@ import {
   verifyPaymentData,
 } from "../parsers/Parsers.js";
 import prismaClient from "../db/index.js";
+import dotenv from 'dotenv'
+dotenv.config()
+const key_id = process.env.RAZORPAY_KEY_ID;
+const key_secret = process.env.RAZORPAY_KEY_SECRET;
 export const initiatePayment = async (req: any, res: any) => {
+  console.log(key_id)
+  console.log(key_secret)
   if (req.method !== "POST") return res.status(405).end();
 
   try {
@@ -19,8 +25,8 @@ export const initiatePayment = async (req: any, res: any) => {
     }
 
     const razorpay = new Razorpay({
-      key_id: "rzp_test_UZYDhupdHjejNu",
-      key_secret: "eqgAnhAwP28XUjZAlb3pqx9k",
+      key_id: key_id,
+      key_secret: key_secret,
     });
 
     const options = { amount: parsedBody.data.amount, currency: "INR" }; // FIX: `amount` should be used, not `userId`

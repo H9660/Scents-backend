@@ -1,35 +1,15 @@
 import {
   loginData,
   registerData,
-  otpData,
   cartData,
   getCartData,
 } from "../parsers/Parsers.js";
+import asyncHandler from 'express-async-handler';
+import bcrypt from "bcryptjs";
 import prismaClient from "../db/index.js";
-import twilio from "twilio";
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const token = process.env.TWILIO_ACCOUNT_TOKEN;
-const client = twilio(accountSid, token);
-
-const generateOTP = (len: number) => {
-  return Math.floor(
-    Math.pow(10, len - 1) + Math.random() * Math.pow(10, len - 1) * 9
-  ).toString();
-};
-
-const sendOTP = async (phoneNumber: string, otp: string) => {
-  try {
-    await client.messages.create({
-      body: `Dear user. Your OTP for SCENTS is: ${otp}`,
-      from: "+16073177382",
-      to: phoneNumber,
-    });
-    console.log("OTP sent via SMS!");
-  } catch (error) {
-    console.error("Error sending OTP:", error);
-  }
-};
-export const loginUser = async (req: any, res: any) => {
+import { generateToken } from "../utils/tokenGenerator.js";
+export const loginUser = asyncHandler( async (req: any, res: any, next: any) => {
+  console.log(req.body);
   const parsedBody = loginData.safeParse(req.body);
   if (!parsedBody.success) {
     res.status(411).json({
@@ -44,75 +24,31 @@ export const loginUser = async (req: any, res: any) => {
     },
   });
 
-  if (!User) {
-    res.status(404).json({ message: "User not found." });
-    return;
+  if (User && (await bcrypt.compare(parsedBody.data.password, User.password))) {
+    const token = generateToken(User.id);
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.ENV === "production",
+      sameSite: "strict",
+      maxAge: 86400000, 
+    });
+
+    res.json({
+      id: User.id,
+      name: User.name,
+      phone: User.phone,
+      token: token,
+      createdAt: User.createdAt
+    });
+  } else {
+    res.status(400);
+    throw new Error("Invalid credentials")
   }
 
-  const OTP = generateOTP(6);
-  console.log(OTP);
-  const parsedPhoneno = "+91" + parsedBody.data.phone;
-  sendOTP(parsedPhoneno, OTP);
-  try {
-    await prismaClient.oTP.update({
-      where: {
-        phone: parsedBody.data.phone,
-      },
-      data: {
-        otp: OTP,
-      },
-    });
-    res.status(200).send({
-      otp: OTP,
-    });
-  } catch (otpError) {
-    console.error("Error creating OTP:", otpError);
-    return res.status(500).json({ error: otpError });
-  }
-};
+});
 
-export const verifyOTP = async (req: any, res: any) => {
-  const parsedBody = otpData.safeParse(req.body);
-  if (!parsedBody.success) {
-    res.status(411).json({
-      message: "Please check the otp again.",
-    });
-    return;
-  }
-
-  const savedOTP = await prismaClient.oTP.findFirst({
-    where: { phone: parsedBody.data.phone },
-  });
-
-  console.log("saved", savedOTP);
-  console.log("got", parsedBody.data.otp);
-  if (savedOTP?.otp == req.body.otp) {
-    console.log("in it");
-    const existingUser = await prismaClient.user.findFirst({
-      where: { phone: parsedBody.data.phone },
-    });
-    let newUser = null;
-    if (existingUser == null) {
-      newUser = await prismaClient.user.create({
-        data: {
-          name: parsedBody.data.name,
-          phone: parsedBody.data.phone,
-        },
-      });
-    }
-    res.status(200).json({
-      message: "Success",
-      user: existingUser !== null ? existingUser : newUser,
-    });
-    return;
-  }
-
-  res.status(400).json({
-    message: "OTP is invalid",
-  });
-};
-
-export const registerUser = async (req: any, res: any) => {
+export const registerUser = asyncHandler( async (req: any, res: any, next: any) => {
   const parsedBody = registerData.safeParse(req.body);
 
   if (!parsedBody.success) {
@@ -122,44 +58,50 @@ export const registerUser = async (req: any, res: any) => {
     return;
   }
 
-  const User = await prismaClient.user.findFirst({
+  const existingUser = await prismaClient.user.findFirst({
     where: {
       phone: parsedBody.data.phone,
     },
   });
 
-  if (User) {
+  if (existingUser) {
     res.status(400).json({ message: "User already exists. Please login." });
     return;
   }
+  
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(parsedBody.data.password, salt);
 
-  const OTP = generateOTP(6);
-  const parsedPhoneno = "+91" + parsedBody.data.phone;
-  sendOTP(parsedPhoneno, OTP);
-  console.log(OTP);
-  // cache this otp here so that it doesnt generate again and again
-  try {
-    await prismaClient.oTP.upsert({
-      where: {
-        phone: parsedBody.data.phone, // Condition to find an existing record
-      },
-      update: {
-        otp: OTP,
-      },
-      create: {
-        phone: parsedBody.data.phone,
-        otp: OTP,
-      },
+  const newUser = await prismaClient.user.create({
+    data: {
+      name: parsedBody.data.name,
+      phone: parsedBody.data.phone,
+      password: hashedPassword,
+    },
+  });
+
+  if (newUser) {
+    const token = generateToken(newUser.id)
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none',
+      maxAge: 86400000,
     });
 
-    return res.status(200).json({
-      otp: OTP,
+    res.status(201).json({
+      _id: newUser.id,
+      name: newUser.name,
+      phone: newUser.phone,
+      token: token,
+      createdAt: newUser.createdAt
     });
-  } catch (otpError) {
-    console.error("Error creating OTP:", otpError);
-    return res.status(500).json({ error: "Failed to generate OTP" });
+  } else {
+    res.status(500);
+    next("Invalid credentials")
   }
-};
+  
+});
 
 export const updateCart = async (req: any, res: any) => {
   const parsedBody = cartData.safeParse(req.body);
@@ -177,12 +119,6 @@ export const updateCart = async (req: any, res: any) => {
     },
   });
 
-  if (!userCart) {
-    res.status(404).json({
-      message: "Cannot add item. Please log in.",
-    });
-    return;
-  }
   try {
     const usercartMap = new Map(Object.entries(userCart?.cartData || {}));
     const gotCartMap = new Map(Object.entries(parsedBody.data.cart || {}));
@@ -246,42 +182,43 @@ export const updateCart = async (req: any, res: any) => {
 };
 
 export const getCart = async (req: any, res: any) => {
-  try {
-    const parsedBody = getCartData.safeParse({ userId: req.query.userId });
-    if (!parsedBody.success) {
-      res.status(411).json({
-        message: "Please check the input data.",
-      });
-      return;
-    }
-
-    const userCart = await prismaClient.cart.findFirst({
-      where: {
-        userId: parsedBody.data.userId,
-      },
+  try{const parsedBody = getCartData.safeParse({ userId: req.query.userId });
+  if (!parsedBody.success) {
+    res.status(411).json({
+      message: "Please check the input data.",
     });
-
-    let cart = {};
-    let price = 0;
-
-    if (userCart && userCart.cartData) {
-      cart = userCart.cartData;
-      price = userCart.cartPrice;
-    }
-    return res.status(200).json({
-      cart: cart,
-      price: price,
-    });
-  } catch (error) {
-    res.status(500).json({
-      error: error,
-    });
+    return;
   }
+
+  const userCart = await prismaClient.cart.findFirst({
+    where: {
+      userId: parsedBody.data.userId,
+    },
+  });
+  
+  console.log("User cart is", userCart)
+  let cart = {};
+  let price = 0;
+  
+  if (userCart && userCart.cartData) {
+    cart = userCart.cartData;
+    price = userCart.cartPrice;
+  }
+  return res.status(200).json({
+    cart: cart,
+    price: price,
+  });
+}catch(error){
+  res.status(500).json({
+    error: error,
+  });
+}
 };
 
 export const getOrders = async (req: any, res: any) => {
   try {
-    console.log("tests");
+
+    console.log("tests")
     const userId = req.body.userId;
     const User = await prismaClient.user.findFirst({
       where: {
@@ -307,25 +244,26 @@ export const getOrders = async (req: any, res: any) => {
   }
 };
 
-export const deletecart = async (req: any, res: any) => {
+export const deletecart = async (req: any, res: any)=>{
   try {
+
     const userId = req.body.userId;
     await prismaClient.cart.deleteMany({
-      where: {
-        userId: userId,
-      },
-    });
+      where:{
+        userId: userId
+      }
+    })
     const User = await prismaClient.user.update({
       where: {
         id: userId as string,
       },
 
-      data: {
-        cart: {},
+      data:{
+        cart: {}
       },
-      include: {
-        transactions: true,
-      },
+      include:{
+        transactions: true
+      }
     });
 
     if (!User) {
@@ -333,7 +271,7 @@ export const deletecart = async (req: any, res: any) => {
         error: "User not found!",
       });
     }
-
+    
     return res.status(200).json({
       error: "",
       orders: User?.transactions,
@@ -342,5 +280,5 @@ export const deletecart = async (req: any, res: any) => {
     res.status(500).json({
       error: error,
     });
-  }
-};
+  } 
+}

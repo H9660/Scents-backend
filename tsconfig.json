@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "module": "NodeNext",               // ESM-compatible modules
-    "moduleResolution": "NodeNext",     // Resolves ESM paths correctly
+    "moduleResolution": "nodenext",     // Resolves ESM paths correctly
     "rootDir": "./",
     "outDir": "./dist",
     "allowImportingTsExtensions": false,

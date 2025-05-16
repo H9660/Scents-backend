@@ -10,7 +10,6 @@ import  { createPerfume,
 // we need to protect the middle ware thats why we are adding the middel ware here
 
 router.get("/", getPerfume)
-// router.post("/calcbatchprice", calcBatchPrice)
 router.get("/all", getAllPerfumes)
 router.post("/add", createPerfume);
 router.delete("/", deletePerfume)

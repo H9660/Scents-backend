@@ -7,16 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model OTP {
-  otp   String
-  tries Int    @default(5)
-  phone String @id
-}
 
 model User {
   id             String         @id @default(uuid())
   name           String
   phone          String         @unique
+  password       String         
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   address        String         @default("")
