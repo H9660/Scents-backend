@@ -100,7 +100,7 @@ export const updatePerfume = async (req: Request, res: Response) => {
   const updatedPerfume = await prismaClient.perfume.update({
     where: { id: perfume.id }, // Use the unique id from findFirst
     data: {
-      ...(parsedBody.data.name && {name: parsedBody.data.name}),
+      ...(parsedBody.data.name && {name: parsedBody.data.newName}),
       ...(parsedBody.data.price && {price: parsedBody.data.price}),
       ...(parsedBody.data.discription && {discription: parsedBody.data.discription}),
       ...(parsedBody.data.imageUrl && { imageUrl: parsedBody.data.imageUrl }),

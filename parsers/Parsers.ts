@@ -1,11 +1,13 @@
 import { z } from "zod";
 export const loginData = z.object({
   phone: z.string(),
+  password: z.string()
 });
 
 export const registerData = z.object({
   name: z.string(),
   phone: z.string(),
+  password: z.string()
 });
 
 export const perfumeData = z.object({

@@ -6,7 +6,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 
-// Load .env file
 config({ path: join(__dirname, ".env") });
 
 let prisma: PrismaClient | null = null;

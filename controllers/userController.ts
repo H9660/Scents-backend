@@ -1,35 +1,14 @@
 import {
   loginData,
   registerData,
-  otpData,
   cartData,
   getCartData,
 } from "../parsers/Parsers.js";
+import asyncHandler from 'express-async-handler';
+import bcrypt from "bcryptjs";
 import prismaClient from "../db/index.js";
-import twilio from "twilio";
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const token = process.env.TWILIO_ACCOUNT_TOKEN;
-const client = twilio(accountSid, token);
-
-const generateOTP = (len: number) => {
-  return Math.floor(
-    Math.pow(10, len - 1) + Math.random() * Math.pow(10, len - 1) * 9
-  ).toString();
-};
-
-const sendOTP = async (phoneNumber: string, otp: string) => {
-  try {
-    await client.messages.create({
-      body: `Dear user. Your OTP for SCENTS is: ${otp}`,
-      from: "+16073177382",
-      to: phoneNumber,
-    });
-    console.log("OTP sent via SMS!");
-  } catch (error) {
-    console.error("Error sending OTP:", error);
-  }
-};
-export const loginUser = async (req: any, res: any) => {
+import { generateToken } from "../utils/tokenGenerator.js";
+export const loginUser = asyncHandler( async (req: any, res: any, next: any) => {
   console.log(req.body);
   const parsedBody = loginData.safeParse(req.body);
   if (!parsedBody.success) {
@@ -45,94 +24,31 @@ export const loginUser = async (req: any, res: any) => {
     },
   });
 
-  if (!User) {
-    res.status(404).json({ message: "User not found." });
-    return;
-  }
+  if (User && (await bcrypt.compare(parsedBody.data.password, User.password))) {
+    const token = generateToken(User.id);
 
-  const OTP = generateOTP(6);
-  console.log(OTP);
-  const parsedPhoneno = "+91" + parsedBody.data.phone;
-  // sendOTP(parsedPhoneno, OTP);
-  try {
-    await prismaClient.oTP.update({
-      where: {
-        phone: parsedBody.data.phone,
-      },
-      data: {
-        otp: OTP,
-        tries: 5,
-      },
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.ENV === "production",
+      sameSite: "strict",
+      maxAge: 86400000, 
     });
-    res.status(200).send({
-      otp: OTP,
-    });
-  } catch (otpError) {
-    console.error("Error creating OTP:", otpError);
-    return res.status(500).json({ error: otpError });
-  }
-};
 
-export const verifyOTP = async (req: any, res: any) => {
-  const parsedBody = otpData.safeParse(req.body);
-  if (!parsedBody.success) {
-    res.status(411).json({
-      message: "Please check the otp again.",
+    res.json({
+      id: User.id,
+      name: User.name,
+      phone: User.phone,
+      token: token,
+      createdAt: User.createdAt
     });
-    return;
-  }
-
-  const savedOTP = await prismaClient.oTP.findFirst({
-    where: { phone: parsedBody.data.phone },
-  });
-
-  console.log("saved", savedOTP);
-  console.log("got", parsedBody.data.otp);
-  if (savedOTP?.otp == req.body.otp) {
-    console.log("in it");
-    const existingUser = await prismaClient.user.findFirst({
-      where: { phone: parsedBody.data.phone },
-    });
-    let newUser = null;
-    if (existingUser == null) {
-      newUser = await prismaClient.user.create({
-        data: {
-          name: parsedBody.data.name,
-          phone: parsedBody.data.phone,
-        },
-      });
-    }
-    res.status(200).json({
-      message: "Success",
-      user: existingUser !== null ? existingUser : newUser,
-    });
-    return;
-  }
-
-  if (savedOTP?.tries == 0) {
-    res.status(400).json({
-      message:
-        "You have entered wrong otp multiple times. Wait for 5 mins and then try again.",
-    });
-    return;
   } else {
-    await prismaClient.oTP.update({
-      where: {
-        phone: parsedBody.data.phone,
-      },
-
-      data: {
-        tries: savedOTP?.tries! - 1,
-      },
-    });
+    res.status(400);
+    throw new Error("Invalid credentials")
   }
 
-  res.status(400).json({
-    message: "OTP is invalid",
-  });
-};
+});
 
-export const registerUser = async (req: any, res: any) => {
+export const registerUser = asyncHandler( async (req: any, res: any, next: any) => {
   const parsedBody = registerData.safeParse(req.body);
 
   if (!parsedBody.success) {
@@ -142,46 +58,50 @@ export const registerUser = async (req: any, res: any) => {
     return;
   }
 
-  const User = await prismaClient.user.findFirst({
+  const existingUser = await prismaClient.user.findFirst({
     where: {
       phone: parsedBody.data.phone,
     },
   });
 
-  if (User) {
+  if (existingUser) {
     res.status(400).json({ message: "User already exists. Please login." });
     return;
   }
+  
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(parsedBody.data.password, salt);
 
-  const OTP = generateOTP(6);
-  const parsedPhoneno = "+91" + parsedBody.data.phone;
-  sendOTP(parsedPhoneno, OTP);
-  console.log(OTP);
-  // cache this otp here so that it doesnt generate again and again
-  try {
-    await prismaClient.oTP.upsert({
-      where: {
-        phone: parsedBody.data.phone, // Condition to find an existing record
-      },
-      update: {
-        otp: OTP,
-        tries: 5,
-      },
-      create: {
-        phone: parsedBody.data.phone,
-        otp: OTP,
-        tries: 5,
-      },
+  const newUser = await prismaClient.user.create({
+    data: {
+      name: parsedBody.data.name,
+      phone: parsedBody.data.phone,
+      password: hashedPassword,
+    },
+  });
+
+  if (newUser) {
+    const token = generateToken(newUser.id)
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none',
+      maxAge: 86400000,
     });
 
-    return res.status(200).json({
-      otp: OTP,
+    res.status(201).json({
+      _id: newUser.id,
+      name: newUser.name,
+      phone: newUser.phone,
+      token: token,
+      createdAt: newUser.createdAt
     });
-  } catch (otpError) {
-    console.error("Error creating OTP:", otpError);
-    return res.status(500).json({ error: "Failed to generate OTP" });
+  } else {
+    res.status(500);
+    next("Invalid credentials")
   }
-};
+  
+});
 
 export const updateCart = async (req: any, res: any) => {
   const parsedBody = cartData.safeParse(req.body);
@@ -275,10 +195,11 @@ export const getCart = async (req: any, res: any) => {
       userId: parsedBody.data.userId,
     },
   });
-
+  
+  console.log("User cart is", userCart)
   let cart = {};
   let price = 0;
-
+  
   if (userCart && userCart.cartData) {
     cart = userCart.cartData;
     price = userCart.cartPrice;
