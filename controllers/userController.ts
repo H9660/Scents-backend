@@ -82,11 +82,11 @@ export const registerUser = asyncHandler( async (req: any, res: any, next: any) 
 
   if (newUser) {
     const token = generateToken(newUser.id)
-    res.cookie('token', token, {
+    res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
-      maxAge: 86400000,
+      secure: process.env.ENV === "production",
+      sameSite: process.env.ENV === "production" ? "none": "lax",
+      maxAge: 86400000, 
     });
 
     res.status(201).json({
