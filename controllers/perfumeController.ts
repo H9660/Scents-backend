@@ -7,9 +7,6 @@ import {
   perfumeUpdateData,
   perfumeDeleteData,
 } from "../parsers/Parsers.js";
-// @desc    Register new user
-// @route   POST /api/users
-// @access  Public
 export const createPerfume = async (req: Request, res: Response) => {
   const parsedBody = perfumeData.safeParse(req.body);
   console.log(parsedBody);
@@ -59,7 +56,7 @@ export const getPerfume = async (req: Request, res: Response) => {
     },
   });
   if (Perfume) {
-    res.status(404).send(Perfume);
+    res.status(200).send(Perfume);
     return;
   }
 
@@ -96,7 +93,6 @@ export const updatePerfume = async (req: Request, res: Response) => {
     return;
   }
 
-  // Step 2: Update the found user
   const updatedPerfume = await prismaClient.perfume.update({
     where: { id: perfume.id }, // Use the unique id from findFirst
     data: {
