@@ -42,6 +42,8 @@ model Transactions {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   subtotal            Int      @default(0)
+  orderDetails        Json
+  address             Json
   user                User     @relation(fields: [userId], references: [id])
 }
 

@@ -51,7 +51,7 @@ export const verifyPayment = async (req: any, res: any) => {
     }
 
     const generatedSignature = crypto
-      .createHmac("sha256", "eqgAnhAwP28XUjZAlb3pqx9k")
+      .createHmac("sha256", key_secret as string)
       .update(
         parsedBody.data.razorpay_order_id +
           "|" +
@@ -82,8 +82,9 @@ export const createTransaction = async (req: any, res: any) => {
 
     if (!parsedBody.success) {
       res.status(411).json({ message: "Please check the input data." });
+      return;
     }
-
+    
     if (parsedBody.data) {
       const transaction = await prismaClient.transactions.create({
         data: {
@@ -91,7 +92,9 @@ export const createTransaction = async (req: any, res: any) => {
           razorpay_order_id: parsedBody.data.razorpay_order_id,
           razorpay_payment_id: parsedBody.data.razorpay_payment_id,
           status: parsedBody.data.status,
+          orderDetails: parsedBody.data.orderDetails,
           subtotal: parsedBody.data.subtotal,
+          address: parsedBody.data.address
         },
       });
 
