@@ -4,11 +4,11 @@ import {
   cartData,
   getCartData,
 } from "../parsers/Parsers.js";
-import asyncHandler from 'express-async-handler';
+import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
 import prismaClient from "../db/index.js";
 import { generateToken } from "../utils/tokenGenerator.js";
-export const loginUser = asyncHandler( async (req: any, res: any, next: any) => {
+export const loginUser = asyncHandler(async (req: any, res: any, next: any) => {
   console.log(req.body);
   const parsedBody = loginData.safeParse(req.body);
   if (!parsedBody.success) {
@@ -30,8 +30,8 @@ export const loginUser = asyncHandler( async (req: any, res: any, next: any) => 
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.ENV === "production",
-      sameSite: process.env.ENV === "production" ? "none": "lax",
-      maxAge: 86400000, 
+      sameSite: process.env.ENV === "production" ? "none" : "lax",
+      maxAge: 86400000,
     });
 
     res.json({
@@ -39,69 +39,69 @@ export const loginUser = asyncHandler( async (req: any, res: any, next: any) => 
       name: User.name,
       phone: User.phone,
       token: token,
-      createdAt: User.createdAt
+      createdAt: User.createdAt,
     });
   } else {
     res.status(400);
-    throw new Error("Invalid credentials")
+    throw new Error("Invalid credentials");
   }
-
 });
 
-export const registerUser = asyncHandler( async (req: any, res: any, next: any) => {
-  const parsedBody = registerData.safeParse(req.body);
+export const registerUser = asyncHandler(
+  async (req: any, res: any, next: any) => {
+    const parsedBody = registerData.safeParse(req.body);
 
-  if (!parsedBody.success) {
-    res.status(411).json({
-      message: "Please check the input data.",
-    });
-    return;
-  }
+    if (!parsedBody.success) {
+      res.status(411).json({
+        message: "Please check the input data.",
+      });
+      return;
+    }
 
-  const existingUser = await prismaClient.user.findFirst({
-    where: {
-      phone: parsedBody.data.phone,
-    },
-  });
-
-  if (existingUser) {
-    res.status(400).json({ message: "User already exists. Please login." });
-    return;
-  }
-  
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(parsedBody.data.password, salt);
-
-  const newUser = await prismaClient.user.create({
-    data: {
-      name: parsedBody.data.name,
-      phone: parsedBody.data.phone,
-      password: hashedPassword,
-    },
-  });
-
-  if (newUser) {
-    const token = generateToken(newUser.id)
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.ENV === "production",
-      sameSite: process.env.ENV === "production" ? "none": "lax",
-      maxAge: 86400000, 
+    const existingUser = await prismaClient.user.findFirst({
+      where: {
+        phone: parsedBody.data.phone,
+      },
     });
 
-    res.status(201).json({
-      _id: newUser.id,
-      name: newUser.name,
-      phone: newUser.phone,
-      token: token,
-      createdAt: newUser.createdAt
+    if (existingUser) {
+      res.status(400).json({ message: "User already exists. Please login." });
+      return;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(parsedBody.data.password, salt);
+
+    const newUser = await prismaClient.user.create({
+      data: {
+        name: parsedBody.data.name,
+        phone: parsedBody.data.phone,
+        password: hashedPassword,
+      },
     });
-  } else {
-    res.status(500);
-    next("Invalid credentials")
+
+    if (newUser) {
+      const token = generateToken(newUser.id);
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.ENV === "production",
+        sameSite: process.env.ENV === "production" ? "none" : "lax",
+        maxAge: 86400000,
+      });
+
+      res.status(201).json({
+        _id: newUser.id,
+        name: newUser.name,
+        phone: newUser.phone,
+        token: token,
+        createdAt: newUser.createdAt,
+      });
+    } else {
+      res.status(500);
+      next("Invalid credentials");
+    }
   }
-  
-});
+);
 
 export const updateCart = async (req: any, res: any) => {
   const parsedBody = cartData.safeParse(req.body);
@@ -182,43 +182,43 @@ export const updateCart = async (req: any, res: any) => {
 };
 
 export const getCart = async (req: any, res: any) => {
-  try{const parsedBody = getCartData.safeParse({ userId: req.query.userId });
-  if (!parsedBody.success) {
-    res.status(411).json({
-      message: "Please check the input data.",
-    });
-    return;
-  }
+  try {
+    const parsedBody = getCartData.safeParse({ userId: req.query.userId });
+    if (!parsedBody.success) {
+      res.status(411).json({
+        message: "Please check the input data.",
+      });
+      return;
+    }
 
-  const userCart = await prismaClient.cart.findFirst({
-    where: {
-      userId: parsedBody.data.userId,
-    },
-  });
-  
-  console.log("User cart is", userCart)
-  let cart = {};
-  let price = 0;
-  
-  if (userCart && userCart.cartData) {
-    cart = userCart.cartData;
-    price = userCart.cartPrice;
+    const userCart = await prismaClient.cart.findFirst({
+      where: {
+        userId: parsedBody.data.userId,
+      },
+    });
+
+    console.log("User cart is", userCart);
+    let cart = {};
+    let price = 0;
+
+    if (userCart && userCart.cartData) {
+      cart = userCart.cartData;
+      price = userCart.cartPrice;
+    }
+    return res.status(200).json({
+      cart: cart,
+      price: price,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error,
+    });
   }
-  return res.status(200).json({
-    cart: cart,
-    price: price,
-  });
-}catch(error){
-  res.status(500).json({
-    error: error,
-  });
-}
 };
 
 export const getOrders = async (req: any, res: any) => {
   try {
-
-    console.log("tests")
+    console.log("tests");
     const userId = req.body.userId;
     const User = await prismaClient.user.findFirst({
       where: {
@@ -237,33 +237,43 @@ export const getOrders = async (req: any, res: any) => {
       error: "",
       orders: User?.transactions,
     });
-  } catch (error) {
+} catch (error) {
     res.status(500).json({
       error: error,
     });
   }
 };
 
-export const deletecart = async (req: any, res: any)=>{
-  try {
+export const getAllOrders = async (req: any, res: any) => {
+  const allOrders = await prismaClient.transactions.findMany();
+  if (!allOrders) {
+    res.status(404);
+    throw new Error("No orders found!");
+  }
 
+  res.status(200).json({
+    orders: allOrders,
+  });
+};
+export const deletecart = async (req: any, res: any) => {
+  try {
     const userId = req.body.userId;
     await prismaClient.cart.deleteMany({
-      where:{
-        userId: userId
-      }
-    })
+      where: {
+        userId: userId,
+      },
+    });
     const User = await prismaClient.user.update({
       where: {
         id: userId as string,
       },
 
-      data:{
-        cart: {}
+      data: {
+        cart: {},
       },
-      include:{
-        transactions: true
-      }
+      include: {
+        transactions: true,
+      },
     });
 
     if (!User) {
@@ -271,7 +281,7 @@ export const deletecart = async (req: any, res: any)=>{
         error: "User not found!",
       });
     }
-    
+
     return res.status(200).json({
       error: "",
       orders: User?.transactions,
@@ -280,5 +290,5 @@ export const deletecart = async (req: any, res: any)=>{
     res.status(500).json({
       error: error,
     });
-  } 
-}
+  }
+};

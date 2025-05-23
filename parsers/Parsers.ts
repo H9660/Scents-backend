@@ -39,10 +39,6 @@ export const otpData = z.object({
   otp: z.string(),
 });
 
-export const cartData = z.object({
-  cart: z.record(z.number()), // Maps product names to counts
-  userId: z.string(),
-});
 
 export const getCartData = z.object({
   userId: z.string(),
@@ -59,10 +55,34 @@ export const verifyPaymentData = z.object({
   razorpay_signature: z.string(),
 });
 
+export const cartData = z.object({
+  cart: z.record(z.number()), // Maps product names to counts
+  userId: z.string(),
+});
+
+export const orderDetails = z.object({
+  cart: z.record(
+    z.object({
+      imageUrl: z.string().url(),
+      price: z.number(),
+      quantity: z.number(),
+    })
+  ),
+  userId: z.string(),
+});
+
 export const transactionData = z.object({
   razorpay_payment_id: z.string(),
   razorpay_order_id: z.string(),
   userId: z.string(),
   subtotal: z.number(),
   status: z.enum(["Pending", "Completed", "Failed"]),
+  orderDetails: orderDetails,
+  address: z.object({
+    street: z.string(),
+    city: z.string(),
+    state: z.string(),
+    country: z.string(),
+    pincode: z.string()
+  })
 });
