@@ -79,7 +79,6 @@ export const createTransaction = async (req: any, res: any) => {
   try {
     console.log(req.body);
     const parsedBody = transactionData.safeParse(req.body);
-
     if (!parsedBody.success) {
       res.status(411).json({ message: "Please check the input data." });
       return;
@@ -103,7 +102,7 @@ export const createTransaction = async (req: any, res: any) => {
       });
     } else res.status(411).send("The body is empty!");
   } catch (error) {
-    console.error("Payment Error:", error);
-    res.status(500).json({ message: "Internal Server Error", error });
+    res.status(500)
+    throw new Error("Internal server error")
   }
 };
