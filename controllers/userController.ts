@@ -38,7 +38,6 @@ export const loginUser = asyncHandler(async (req: any, res: any, next: any) => {
       id: User.id,
       name: User.name,
       phone: User.phone,
-      token: token,
       createdAt: User.createdAt,
     });
   } else {
@@ -93,7 +92,6 @@ export const registerUser = asyncHandler(
         _id: newUser.id,
         name: newUser.name,
         phone: newUser.phone,
-        token: token,
         createdAt: newUser.createdAt,
       });
     } else {

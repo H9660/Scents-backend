@@ -70,8 +70,8 @@ export const verifyPayment = async (req: any, res: any) => {
       });
     }
   } catch (error) {
-    console.error("Payment Error:", error);
-    res.status(500).json({ message: "Internal Server Error", error });
+    res.status(500)
+    throw new Error("Internal server error")
   }
 };
 
