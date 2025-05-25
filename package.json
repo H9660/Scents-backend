@@ -28,6 +28,7 @@
   "dependencies": {
     "@apollo/server": "^4.11.3",
     "@as-integrations/next": "^3.2.0",
+    "@aws-sdk/client-ses": "^3.817.0",
     "@prisma/client": "^6.4.1",
     "@types/jsonwebtoken": "^9.0.9",
     "bcryptjs": "^3.0.2",

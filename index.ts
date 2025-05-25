@@ -4,6 +4,7 @@ import express from "express";
 import userRoutes from "./routes/userRoutes.js";
 import perfumeRoutes from "./routes/perfumeRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import mailRoutes from "./routes/mailRoutes.js"
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { errorMiddleware } from "./middleware/errorMiddleware.js";
@@ -23,6 +24,7 @@ app.use(express.json());
 app.use("/api/users", userRoutes);
 app.use("/api/perfume", perfumeRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/sendmail", mailRoutes)
 app.use(errorMiddleware);
 app.listen(5000, () => {
   console.log("Server is started.");

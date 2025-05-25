@@ -86,3 +86,44 @@ export const transactionData = z.object({
     pincode: z.string()
   })
 });
+
+
+
+// TransactionIdFormat
+const TransactionIdFormat = z.object({
+  transactionId: z.string(),
+});
+
+// cartItemFormat
+export const cartItemFormat = z.object({
+  imageUrl: z.string().url(),
+  price: z.number(),
+  quantity: z.number().int().nonnegative(),
+});
+
+// NumberRecord = Record<string, cartItemFormat>
+export const NumberRecord = z.record(cartItemFormat);
+
+// AddressFormat
+const AddressFormat = z.object({
+  city: z.string(),
+  street: z.string(),
+  state: z.string(),
+  pincode: z.string(),
+  country: z.string(),
+});
+
+const CartDataFormat = z.object({
+  cart: z.record(cartItemFormat),  // the original cart items
+  price: z.number(),                 // the total price field
+});
+
+// Final emailData schema
+export const emailData = z.object({
+  name: z.string(),
+  email: z.string().email(),
+  transactionId: z.string(),
+  cartdata: CartDataFormat,
+  address: AddressFormat,
+});
+
