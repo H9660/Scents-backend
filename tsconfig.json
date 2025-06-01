@@ -11,6 +11,6 @@
     "resolveJsonModule": true,
     "target": "ES2020"                  // Modern syntax support
   },
-  "include": ["./**/*.ts"],
+  "include": ["./**/*.ts", "utils/emailClient.js", "utils/emailClient.js"],
   "exclude": ["node_modules", "dist"]
 }

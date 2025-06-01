@@ -9,7 +9,7 @@ import bcrypt from "bcryptjs";
 import prismaClient from "../db/index.js";
 import { generateToken } from "../utils/tokenGenerator.js";
 export const loginUser = asyncHandler(async (req: any, res: any, next: any) => {
-  console.log(req.body);
+  console.log(req.headers);
   const parsedBody = loginData.safeParse(req.body);
   if (!parsedBody.success) {
     res.status(411).json({
@@ -101,6 +101,16 @@ export const registerUser = asyncHandler(
   }
 );
 
+export const getMe = (req: any, res: any) => {
+  if (!req.user) {
+    res.status(401).json({
+      error: "Unauthorized",
+    });
+  }
+  res.status(200).json({
+    user: req.user,
+  });
+};
 export const updateCart = async (req: any, res: any) => {
   const parsedBody = cartData.safeParse(req.body);
   console.log(req.body);
@@ -136,13 +146,16 @@ export const updateCart = async (req: any, res: any) => {
           });
         }
 
-        usercartMap.set(product as string, {
-          imageUrl: Perfume.imageUrl,
-          quantity: (usercartMap.get(product).quantity || 0) + count,
-          price:
-            (usercartMap.get(product).price || 0) +
-            Perfume.price * (count as number),
-        });
+        if (usercartMap.get(product).quantity === 1 && count==-1)
+          usercartMap.delete(product);
+        else
+          usercartMap.set(product as string, {
+            imageUrl: Perfume.imageUrl,
+            quantity: (usercartMap.get(product).quantity || 0) + count,
+            price:
+              (usercartMap.get(product).price || 0) +
+              Perfume.price * (count as number),
+          });
       }
     }
 
@@ -216,7 +229,6 @@ export const getCart = async (req: any, res: any) => {
 
 export const getOrders = async (req: any, res: any) => {
   try {
-    console.log("tests");
     const userId = req.body.userId;
     const User = await prismaClient.user.findFirst({
       where: {
@@ -229,13 +241,19 @@ export const getOrders = async (req: any, res: any) => {
       res.status(404).json({
         error: "User not found!",
       });
+      return;
     }
+    const orders = User.transactions.map((t) => ({
+      transactionId: t.transactions_id,
+      orderDetails: t.orderDetails, // assuming this is a JSON field
+      subtotal: t.subtotal,
+    }));
 
     return res.status(200).json({
       error: "",
-      orders: User?.transactions,
+      orders,
     });
-} catch (error) {
+  } catch (error) {
     res.status(500).json({
       error: error,
     });
@@ -253,6 +271,7 @@ export const getAllOrders = async (req: any, res: any) => {
     orders: allOrders,
   });
 };
+
 export const deletecart = async (req: any, res: any) => {
   try {
     const userId = req.body.userId;
