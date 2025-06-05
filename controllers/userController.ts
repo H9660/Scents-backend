@@ -229,7 +229,7 @@ export const getCart = async (req: any, res: any) => {
 
 export const getOrders = async (req: any, res: any) => {
   try {
-    const userId = req.body.userId;
+    const userId = req.query.userId;
     const User = await prismaClient.user.findFirst({
       where: {
         id: userId as string,
