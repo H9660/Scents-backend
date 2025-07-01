@@ -29,23 +29,7 @@ app.use(
   })
 );
 
-// app.use((req, res, next) => {
-//   if (req.method === "GET") return next(); // Skip CSRF for GET
-//   csrfProtection(req as any, res as any, (err) => {
-//     if (err) return next(err);
-//     res.cookie("XSRF-TOKEN", req.csrfToken(), {
-//       httpOnly: false,
-//       secure: process.env.NODE_ENV === "production",
-//       sameSite: "lax",
-//     });
-//     next();
-//   });
-// });
-
 app.use(express.json());
-app.get("/api/csrf-token", (req: Request, res: Response) => {
-  res.json({ csrfToken: req.csrfToken() });
-});
 app.use("/api/users", userRoutes);
 app.use("/api/perfume", perfumeRoutes);
 app.use("/api/payment", paymentRoutes);
