@@ -59,7 +59,7 @@ export const getPerfume = async (req: Request, res: Response) => {
     },
   });
   if (Perfume) {
-    res.status(404).send(Perfume);
+    res.status(200).send(Perfume);
     return;
   }
 
